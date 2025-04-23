@@ -16,7 +16,9 @@ template<typename T> void release(const T *);
 /// reference count in the managed class.  The managed class must therefore have
 /// a reference count field and provide two functions 'acquire' and 'release'
 /// to acquire and release a reference on itself.
-///
+/// 
+/// 这 tmd 不就是智能指针？
+/// 
 /// For example:
 /// struct X {
 ///   mutable long ref = 0;
