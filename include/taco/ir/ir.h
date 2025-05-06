@@ -291,7 +291,7 @@ namespace taco
     };
 
     /** A variable.  */
-    struct Var : public ExprNode<Var>
+    struct Var : public ExprNode<Var> // 可扩展！
     {
       std::string name;
       bool is_ptr;

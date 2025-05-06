@@ -475,7 +475,7 @@ namespace taco
       stream << keywordString("; ");
       op->var.accept(this);
       stream << " < ";
-      parentPrecedence = BOTTOM;
+      parentPrecedence = BOTTOM; // why ? 无论如何都加括号？
       op->end.accept(this);
       stream << keywordString("; ");
       op->var.accept(this);
