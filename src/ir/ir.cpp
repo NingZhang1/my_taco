@@ -973,14 +973,14 @@ namespace taco
       else
         gp->type = Int();
 
-      const Var *tensorVar = tensor.as<Var>();
+      const Var *tensorVar = tensor.as<Var>(); // 讲 IR handle 转化成了 IRNODE! 
       switch (property)
       {
       case TensorProperty::Order:
         gp->name = tensorVar->name + "_order";
         break;
       case TensorProperty::Dimension:
-        gp->name = tensorVar->name + util::toString(mode + 1) + "_dimension";
+        gp->name = tensorVar->name + util::toString(mode + 1) + "_dimension"; // 1-based ? 
         break;
       case TensorProperty::ComponentSize:
         gp->name = tensorVar->name + "_csize";
