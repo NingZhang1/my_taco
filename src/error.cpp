@@ -5,44 +5,55 @@
 
 using namespace std;
 
-namespace taco {
+namespace taco
+{
 
-TacoException::TacoException(std::string msg) : message(msg) {}
+  TacoException::TacoException(std::string msg) : message(msg) {}
 
-const char* TacoException::what() const noexcept {
-  return message.c_str();
-}
-
-
-ErrorReport::ErrorReport(const char *file, const char *func, int line,
-                         bool condition, const char *conditionString,
-                         Kind kind, bool warning)
-    : msg(NULL), file(file), func(func), line(line), condition(condition),
-      conditionString(conditionString), kind(kind), warning(warning) {
-  if (condition) {
-    return;
+  const char *TacoException::what() const noexcept
+  {
+    return message.c_str();
   }
-  msg = new std::ostringstream;
 
-  switch (kind) {
+  ErrorReport::ErrorReport(const char *file, const char *func, int line,
+                           bool condition, const char *conditionString,
+                           Kind kind, bool warning)
+      : msg(NULL), file(file), func(func), line(line), condition(condition),
+        conditionString(conditionString), kind(kind), warning(warning)
+  {
+    if (condition)
+    {
+      return;
+    }
+    msg = new std::ostringstream;
+
+    switch (kind)
+    {
     case User:
-      if (warning) {
+      if (warning)
+      {
         (*msg) << "Warning";
-      } else {
+      }
+      else
+      {
         (*msg) << "Error";
       }
       (*msg) << " at " << file << ":" << line << " in " << func << ":" << endl;
       break;
     case Internal:
       (*msg) << "Compiler bug";
-      if (warning) {
+      if (warning)
+      {
         (*msg) << "(warning)";
       }
       (*msg) << " at " << file << ":" << line << " in " << func;
-      (*msg) << endl << "Please report it to developers";
+      (*msg) << endl
+             << "Please report it to developers";
 
-      if (conditionString) {
-        (*msg)  << endl << " Condition failed: " << conditionString;
+      if (conditionString)
+      {
+        (*msg) << endl
+               << " Condition failed: " << conditionString;
       }
       (*msg) << endl;
       break;
@@ -50,19 +61,22 @@ ErrorReport::ErrorReport(const char *file, const char *func, int line,
       (*msg) << "Temporary assumption broken";
       (*msg) << " at " << file << ":" << line << endl;
       (*msg) << " Not supported yet, but planned for the future";
-      if (conditionString) {
-        (*msg) << endl << " Condition failed: " << conditionString;
+      if (conditionString)
+      {
+        (*msg) << endl
+               << " Condition failed: " << conditionString;
       }
       (*msg) << endl;
       break;
+    }
+    (*msg) << " ";
   }
-  (*msg) << " ";
-}
 
-void ErrorReport::explodeWithException() {
-  TacoException e = TacoException(msg->str());
-  delete msg;
-  throw e;
-}
+  void ErrorReport::explodeWithException()
+  {
+    TacoException e = TacoException(msg->str());
+    delete msg;
+    throw e;
+  }
 
 }
