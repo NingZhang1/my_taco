@@ -1273,7 +1273,7 @@ namespace taco
 
   std::ostream &operator<<(std::ostream &, const TensorVar &);
 
-  /// Check whether the statment is in the einsum index notation dialect.
+  /// Check whether the statement is in the einsum index notation dialect.
   /// This means the statement is an assignment, does not have any reduction
   /// nodes, and is a sum of product, e.g., `a*...*b + ... + c*...*d`.    You can
   /// optionally pass in a pointer to a string that the reason why it is not
