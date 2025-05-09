@@ -101,6 +101,9 @@ namespace taco
     return const_cast<IndexExprNode *>(this->ptr)->getDataType();
   }
 
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // workspace related 
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   void IndexExpr::workspace(IndexVar i, IndexVar iw, std::string name)
   {
     //  const_cast<IndexExprNode*>(this->ptr)->splitOperator(i, i, iw);
@@ -117,6 +120,7 @@ namespace taco
     //  const_cast<IndexExprNode*>(this->ptr)->workspace(i, iw, workspace);
     this->ptr->setWorkspace(i, iw, workspace);
   }
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   void IndexExpr::accept(IndexExprVisitorStrict *v) const
   {
@@ -250,7 +254,7 @@ namespace taco
     {
       if (!util::contains(isoBTensor, a) && !util::contains(isoATensor, b))
       {
-        if (a.getType() != b.getType() || a.getFormat() != b.getFormat())
+        if (a.getType() != b.getType() || a.getFormat() != b.getFormat()) // 首次遇到先假定二者有一一对应关系，再检查这种对应关系是否一直成立。
         {
           return false;
         }

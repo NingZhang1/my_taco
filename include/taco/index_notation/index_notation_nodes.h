@@ -324,7 +324,7 @@ namespace taco
     std::vector<IndexExpr> args;
   };
 
-  struct CallNode : public IndexExprNode
+  struct CallNode : public IndexExprNode // callnode 是干嘛的？
   {
     typedef std::function<ir::Expr(const std::vector<ir::Expr> &)> OpImpl;
     typedef std::function<IterationAlgebra(const std::vector<IndexExpr> &)> AlgebraImpl;
