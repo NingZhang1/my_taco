@@ -4435,7 +4435,7 @@ namespace taco
 
   vector<ir::Expr> createVars(const vector<TensorVar> &tensorVars,
                               map<TensorVar, ir::Expr> *vars,
-                              bool isParameter)
+                              bool isParameter) // 默认是 false 
   {
     taco_iassert(vars != nullptr);
     vector<ir::Expr> irVars;

@@ -16,7 +16,7 @@ namespace taco
 {
 
   // class Iterator
-  struct Iterator::Content
+  struct Iterator::Content // 这不是 wrapper for tensor mode when lowering ?
   {
     IndexVar indexVar;
     Mode mode;
@@ -74,9 +74,9 @@ namespace taco
   Iterator::Iterator(ir::Expr tensor) : content(new Content)
   {
     content->tensor = tensor;
-    content->posVar = 0;
-    content->coordVar = 0;
-    content->endVar = 1;
+    content->posVar = 0;   // why literal ?
+    content->coordVar = 0; // why literal ?
+    content->endVar = 1;   // why literal ?
   }
 
   Iterator::Iterator(IndexVar indexVar, Expr tensor, Mode mode, Iterator parent,
@@ -86,12 +86,12 @@ namespace taco
 
     content->mode = mode;
     content->parent = parent;
-    content->parent.setChild(*this);
+    content->parent.setChild(*this); // ！
 
     string modeName = mode.getName();
     content->tensor = tensor;
 
-    string posNamePrefix = "p" + modeName;
+    string posNamePrefix = "p" + modeName; // ? 压根没用到啊？
     if (useNameForPos)
     {
       posNamePrefix = name;
@@ -133,7 +133,7 @@ namespace taco
     content->child = iterator.content;
   }
 
-  IndexVar Iterator::getIndexVar() const
+  IndexVar Iterator::getIndexVar() const // index var in access expr
   {
     return content->indexVar;
   }
@@ -144,7 +144,7 @@ namespace taco
     return content->tensor;
   }
 
-  const Mode &Iterator::getMode() const
+  const Mode &Iterator::getMode() const // tensor mode!
   {
     taco_iassert(defined());
     return content->mode;
@@ -162,6 +162,9 @@ namespace taco
     return content->coordVar;
   }
 
+  // ---------------------------
+  // 这是干嘛的？
+  // ---------------------------
   Expr Iterator::getIteratorVar() const
   {
     return hasPosIter() ? getPosVar() : getCoordVar();
@@ -211,7 +214,7 @@ namespace taco
     taco_iassert(defined());
     if (isDimensionIterator())
       return !content->beginVar.defined() && !content->endVar.defined();
-    return getMode().defined() && getMode().getModeFormat().isFull();
+    return getMode().defined() && getMode().getModeFormat().isFull(); // ModeFormat 定义的是 level property
   }
 
   bool Iterator::isOrdered() const
@@ -558,6 +561,10 @@ namespace taco
     this->content->indexSetIterator = iter;
   }
 
+  // ----------------------------------------------------------------
+  // operators on Iterator !
+  // ----------------------------------------------------------------
+
   bool operator==(const Iterator &a, const Iterator &b)
   {
     if (a.isDimensionIterator() && b.isDimensionIterator())
@@ -594,10 +601,14 @@ namespace taco
     return os << iterator.getTensor();
   }
 
+  // ----------------------------------------------------------------
+  // Iterators !
+  // ----------------------------------------------------------------
+
   // class Iterators
   struct Iterators::Content
   {
-    map<ModeAccess, Iterator> levelIterators;
+    map<ModeAccess, Iterator> levelIterators; // ModeAccess encode the Access Expression!
     map<Iterator, ModeAccess> modeAccesses;
     map<IndexVar, Iterator> modeIterators;
   };
@@ -607,54 +618,73 @@ namespace taco
   {
   }
 
+  /// createIRTensorVars : Convert index notation tensor variables in the index statement to IR pointer variables.
   Iterators::Iterators(IndexStmt stmt) : Iterators(stmt, createIRTensorVars(stmt))
   {
   }
 
   Iterators::Iterators(IndexStmt stmt, const map<TensorVar, Expr> &tensorVars)
       : Iterators()
-  {
+  { // ???? //
     ProvenanceGraph provGraph = ProvenanceGraph(stmt);
     set<IndexVar> underivedAdded;
     set<IndexVar> computeVars;
     // Create dimension iterators
     match(stmt,
-          function<void(const ForallNode *, Matcher *)>([&](auto n, auto m)
-                                                        {
-      content->modeIterators.insert({n->indexVar, Iterator(n->indexVar, !provGraph.hasCoordBounds(n->indexVar)
-                                                                              && provGraph.isCoordVariable(n->indexVar))});
-      for (const IndexVar& underived : provGraph.getUnderivedAncestors(n->indexVar)) {
-        if (!underivedAdded.count(underived)) {
-          content->modeIterators.insert({underived, underived});
-          underivedAdded.insert(underived);
-        }
-      }
+          function<void(const ForallNode *, Matcher *)>( //
+              [&](auto n, auto m)                        //
+              {
+                content->modeIterators.insert({n->indexVar, Iterator(n->indexVar, !provGraph.hasCoordBounds(n->indexVar) && provGraph.isCoordVariable(n->indexVar))});
+                for (const IndexVar &underived : provGraph.getUnderivedAncestors(n->indexVar))
+                {
+                  if (!underivedAdded.count(underived))
+                  {
+                    content->modeIterators.insert({underived, underived});
+                    underivedAdded.insert(underived);
+                  }
+                }
 
-      // Insert all children of current index variable into iterators as well
-      for (const IndexVar& child : provGraph.getChildren(n->indexVar)) {
-        if (!underivedAdded.count(child)) {
-          content->modeIterators.insert({child, child});
-          underivedAdded.insert(child);
-        }
-      }
+                // Insert all children of current index variable into iterators as well
+                for (const IndexVar &child : provGraph.getChildren(n->indexVar))
+                {
+                  if (!underivedAdded.count(child))
+                  {
+                    content->modeIterators.insert({child, child});
+                    underivedAdded.insert(child);
+                  }
+                }
 
-      m->match(n->stmt); }),
-          function<void(const IndexVarNode *)>([&](const IndexVarNode *var) {
+                m->match(n->stmt); //
+              } //
+              ),                                //
+          function<void(const IndexVarNode *)>( //, match 到 forall 就终止 ! 
+              [&](const IndexVarNode *var)      //
+              {
 
-          }));
+              } //
+              ) //
+    );          //
 
     // Create access iterators
+
     match(stmt,
-          function<void(const AccessNode *)>([&](auto n)
-                                             {
-      taco_iassert(util::contains(tensorVars, n->tensorVar));
-      Expr tensorIR = tensorVars.at(n->tensorVar);
-      Format format = n->tensorVar.getFormat();
-      this->createAccessIterators(Access(n), format, tensorIR, provGraph, tensorVars); }),
-          function<void(const AssignmentNode *, Matcher *)>([&](auto n, auto m)
-                                                            {
-      m->match(n->rhs);
-      m->match(n->lhs); }));
+          function<void(const AccessNode *)>( //
+              [&](auto n)                     //
+              {
+                taco_iassert(util::contains(tensorVars, n->tensorVar));
+                Expr tensorIR = tensorVars.at(n->tensorVar);
+                Format format = n->tensorVar.getFormat();
+                this->createAccessIterators(Access(n), format, tensorIR, provGraph, tensorVars);
+              } //
+              ),
+          function<void(const AssignmentNode *, Matcher *)>( //
+              [&](auto n, auto m)
+              {
+                m->match(n->rhs);
+                m->match(n->lhs);
+              } //
+              ) //
+    );
 
     // Reverse the levelIterators map for fast modeAccess lookup
     for (auto &iterator : content->levelIterators)
@@ -663,9 +693,11 @@ namespace taco
     }
   }
 
-  void Iterators::createAccessIterators(Access access, Format format, Expr tensorIR,
-                                        ProvenanceGraph provGraph,
-                                        const map<TensorVar, Expr> &tensorVars)
+  // TODO: read the code ! 
+  void Iterators::createAccessIterators(Access access,                          //
+                                        Format format, Expr tensorIR,           //
+                                        ProvenanceGraph provGraph,              //
+                                        const map<TensorVar, Expr> &tensorVars) //
   {
     TensorVar tensorConcrete = access.getTensorVar();
     taco_iassert(tensorConcrete.getOrder() == format.getOrder())

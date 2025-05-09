@@ -13,7 +13,7 @@ namespace taco
   {
   public:
     /// Create a mode access.
-    ModeAccess(Access access, int mode);
+    ModeAccess(Access access, int mode); // mode is 1-based!
 
     /// Get the `Access` expression of the mode access.
     Access getAccess() const;
